@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\hp\OneDrive - vit.ac.in\6th sem\DL\gesture recog\server.py", line 2, in <module>
+    import cv2
+ModuleNotFoundError: No module named 'cv2'

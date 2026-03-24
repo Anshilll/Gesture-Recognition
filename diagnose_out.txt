@@ -1,0 +1,19 @@
+Trying cv2...
+cv2 OK
+Trying numpy...
+numpy OK: 1.26.4
+Trying mediapipe...
+mediapipe OK
+Trying flask...
+flask OK
+Trying importlib for gesture_app...
+ERROR: module 'mediapipe' has no attribute 'solutions'
+Traceback (most recent call last):
+  File "C:\Users\hp\OneDrive - vit.ac.in\6th sem\DL\gesture recog\diagnose.py", line 26, in <module>
+    spec.loader.exec_module(gesture_app)
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "C:\Users\hp\OneDrive - vit.ac.in\6th sem\DL\gesture recog\app (1).py", line 6, in <module>
+    mp_hands = mp.solutions.hands
+               ^^^^^^^^^^^^
+AttributeError: module 'mediapipe' has no attribute 'solutions'

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Gesture Recognition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>AI Gesture Detection</h1>
+            <p>Show a gesture to the camera</p>
+        </header>
+
+        <main class="vision-container">
+            <div class="video-wrapper">
+                <video id="webcam" autoplay playsinline></video>
+                <div class="overlay">
+                    <div class="status-indicator">
+                        <span class="dot"></span> Live
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-panel">
+                <div class="gesture-card">
+                    <h2>Detected Gesture</h2>
+                    <div id="gesture-result" class="gesture-text placeholder">
+                        Waiting...
+                    </div>
+                </div>
+                
+                <div class="instructions-card">
+                    <h3>Supported Gestures:</h3>
+                    <ul>
+                        <li><span class="icon">👍</span> <strong>YES</strong> (Thumb up)</li>
+                        <li><span class="icon">🖐️</span> <strong>HELLO</strong> (Open hand)</li>
+                        <li><span class="icon">✊</span> <strong>NO</strong> (Fist)</li>
+                    </ul>
+                </div>
+            </div>
+            
+        </main>
+        
+        <canvas id="canvas" style="display: none;"></canvas>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
