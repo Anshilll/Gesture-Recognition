@@ -15,41 +15,96 @@ base_options = mp_python.BaseOptions(model_asset_path=MODEL_PATH)
 options = HandLandmarkerOptions(
     base_options=base_options,
     running_mode=RunningMode.IMAGE,
-    num_hands=1,
-    min_hand_detection_confidence=0.7,
-    min_hand_presence_confidence=0.7,
+    num_hands=2,
+    min_hand_detection_confidence=0.6,
+    min_hand_presence_confidence=0.6,
     min_tracking_confidence=0.5,
 )
 detector = HandLandmarker.create_from_options(options)
 
+import math
+
+def _distance(p1, p2):
+    """Euclidean distance between two (x, y) tuples."""
+    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+
+
 def get_gesture(landmarks, frame_w, frame_h):
-    """Classify gesture from normalized landmark list."""
+    """Classify gesture from normalized landmark list — supports 9 gestures."""
     def px(lm):
         return int(lm.x * frame_w), int(lm.y * frame_h)
 
+    wrist       = px(landmarks[0])
+    thumb_cmc   = px(landmarks[1])
+    thumb_mcp   = px(landmarks[2])
+    thumb_ip    = px(landmarks[3])
     thumb_tip   = px(landmarks[4])
+    index_mcp   = px(landmarks[5])
+    index_pip   = px(landmarks[6])   # index_base
+    index_dip   = px(landmarks[7])
     index_tip   = px(landmarks[8])
-    index_base  = px(landmarks[6])
+    middle_mcp  = px(landmarks[9])
+    middle_pip  = px(landmarks[10])  # middle_base
+    middle_dip  = px(landmarks[11])
     middle_tip  = px(landmarks[12])
-    middle_base = px(landmarks[10])
+    ring_mcp    = px(landmarks[13])
+    ring_pip    = px(landmarks[14])  # ring_base
+    ring_dip    = px(landmarks[15])
     ring_tip    = px(landmarks[16])
-    ring_base   = px(landmarks[14])
+    pinky_mcp   = px(landmarks[17])
+    pinky_pip   = px(landmarks[18])  # pinky_base
+    pinky_dip   = px(landmarks[19])
     pinky_tip   = px(landmarks[20])
-    pinky_base  = px(landmarks[18])
 
-    # YES gesture (Thumb up)
-    if thumb_tip[1] < index_base[1]:
-        return "YES"
-    # HELLO gesture (open hand)
-    elif (index_tip[1] < index_base[1] and
-          middle_tip[1] < middle_base[1] and
-          ring_tip[1] < ring_base[1] and
-          pinky_tip[1] < pinky_base[1]):
+    # --- Helper: finger extended? ---
+    index_up  = index_tip[1] < index_pip[1]
+    middle_up = middle_tip[1] < middle_pip[1]
+    ring_up   = ring_tip[1] < ring_pip[1]
+    pinky_up  = pinky_tip[1] < pinky_pip[1]
+
+    # Thumb: compare x-distance from wrist (works for left/right hand)
+    thumb_up_y = thumb_tip[1] < thumb_ip[1]  # thumb pointing upward
+    thumb_out  = abs(thumb_tip[0] - wrist[0]) > abs(thumb_ip[0] - wrist[0])
+
+    all_fingers_curled = not index_up and not middle_up and not ring_up and not pinky_up
+
+    # --- OK gesture: thumb tip very close to index tip, others extended ---
+    thumb_index_dist = _distance(thumb_tip, index_tip)
+    palm_size = _distance(wrist, middle_mcp)
+    if palm_size > 0 and (thumb_index_dist / palm_size) < 0.25 and middle_up and ring_up and pinky_up:
+        return "OK"
+
+    # --- PEACE: index + middle up, ring + pinky curled ---
+    if index_up and middle_up and not ring_up and not pinky_up:
+        return "PEACE"
+
+    # --- ROCK ON: index + pinky up, middle + ring curled ---
+    if index_up and not middle_up and not ring_up and pinky_up and not thumb_out:
+        return "ROCK ON"
+
+    # --- I LOVE YOU: thumb + index + pinky up, middle + ring curled ---
+    if index_up and not middle_up and not ring_up and pinky_up and thumb_out:
+        return "I LOVE YOU"
+
+    # --- POINTING: only index extended ---
+    if index_up and not middle_up and not ring_up and not pinky_up:
+        return "POINTING"
+
+    # --- THUMBS UP: thumb points up, all fingers curled ---
+    if thumb_up_y and thumb_tip[1] < index_mcp[1] and all_fingers_curled:
+        return "THUMBS UP"
+
+    # --- THUMBS DOWN: thumb points down, all fingers curled ---
+    if not thumb_up_y and thumb_tip[1] > thumb_cmc[1] and all_fingers_curled:
+        return "THUMBS DOWN"
+
+    # --- HELLO / OPEN HAND: all fingers extended ---
+    if index_up and middle_up and ring_up and pinky_up:
         return "HELLO"
-    # NO gesture (fist)
-    elif (index_tip[1] > index_base[1] and
-          middle_tip[1] > middle_base[1]):
-        return "NO"
+
+    # --- FIST: all fingers curled ---
+    if all_fingers_curled:
+        return "FIST"
 
     return "Unknown"
 
@@ -125,5 +180,5 @@ def predict():
 
 
 if __name__ == '__main__':
-    print("✅  Gesture server running on http://localhost:5000")
-    app.run(debug=False, port=5000, threaded=True)
+    print("✅  Gesture server running on http://localhost:5001")
+    app.run(debug=False, port=5001, threaded=True)

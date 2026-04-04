@@ -3,50 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gesture Recognition</title>
+    <title>AI Gesture & Speech Recognition</title>
+    <meta name="description" content="Real-time AI-powered gesture and speech recognition using MediaPipe and Web Speech API">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
 </head>
 <body>
+    <!-- Particle Background -->
+    <canvas id="particles-canvas"></canvas>
+
     <div class="app-container">
+        <!-- Header -->
         <header>
-            <h1>AI Gesture Detection</h1>
-            <p>Show a gesture to the camera</p>
+            <div class="header-badge">
+                <span class="material-symbols-rounded">neurology</span>
+                AI-Powered Recognition
+            </div>
+            <h1>Gesture & Speech <span class="gradient-text">Recognition</span></h1>
+            <p class="subtitle">Real-time hand gesture detection & voice transcription powered by deep learning</p>
         </header>
 
-        <main class="vision-container">
-            <div class="video-wrapper">
-                <video id="webcam" autoplay playsinline></video>
-                <div class="overlay">
-                    <div class="status-indicator">
-                        <span class="dot"></span> Live
+        <!-- Main Content -->
+        <main class="main-grid">
+            <!-- Left Column: Video Feed -->
+            <section class="video-section">
+                <div class="video-wrapper" id="video-wrapper">
+                    <video id="webcam" autoplay playsinline></video>
+                    <div class="video-overlay">
+                        <div class="corner-marker top-left"></div>
+                        <div class="corner-marker top-right"></div>
+                        <div class="corner-marker bottom-left"></div>
+                        <div class="corner-marker bottom-right"></div>
+                        <div class="scan-line"></div>
+                    </div>
+                    <div class="video-badges">
+                        <div class="status-badge live">
+                            <span class="live-dot"></span> LIVE
+                        </div>
+                        <div class="status-badge fps">
+                            <span class="material-symbols-rounded">speed</span> 10 FPS
+                        </div>
+                    </div>
+                    <div class="detected-gesture-overlay" id="gesture-overlay">
+                        <span id="gesture-overlay-text"></span>
                     </div>
                 </div>
-            </div>
 
-            <div class="results-panel">
-                <div class="gesture-card">
-                    <h2>Detected Gesture</h2>
-                    <div id="gesture-result" class="gesture-text placeholder">
-                        Waiting...
+                <!-- Gesture History -->
+                <div class="card history-card">
+                    <div class="card-header">
+                        <span class="material-symbols-rounded">history</span>
+                        <h3>Gesture History</h3>
+                        <button class="clear-btn" id="clear-gesture-history" title="Clear history">
+                            <span class="material-symbols-rounded">delete_sweep</span>
+                        </button>
+                    </div>
+                    <div class="history-list" id="gesture-history">
+                        <div class="history-empty">No gestures detected yet</div>
                     </div>
                 </div>
-                
-                <div class="instructions-card">
-                    <h3>Supported Gestures:</h3>
-                    <ul>
-                        <li><span class="icon">👍</span> <strong>YES</strong> (Thumb up)</li>
-                        <li><span class="icon">🖐️</span> <strong>HELLO</strong> (Open hand)</li>
-                        <li><span class="icon">✊</span> <strong>NO</strong> (Fist)</li>
-                    </ul>
+            </section>
+
+            <!-- Right Column: Results -->
+            <aside class="results-panel">
+                <!-- Gesture Detection Card -->
+                <div class="card gesture-card" id="gesture-card">
+                    <div class="card-glow gesture-glow"></div>
+                    <div class="card-header">
+                        <span class="material-symbols-rounded">pan_tool</span>
+                        <h2>Detected Gesture</h2>
+                    </div>
+                    <div class="result-display">
+                        <div id="gesture-result" class="result-text gesture-text placeholder">
+                            Waiting...
+                        </div>
+                        <div class="confidence-bar" id="gesture-confidence">
+                            <div class="confidence-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Speech Recognition Card -->
+                <div class="card speech-card" id="speech-card">
+                    <div class="card-glow speech-glow"></div>
+                    <div class="card-header">
+                        <span class="material-symbols-rounded">mic</span>
+                        <h2>Speech Recognition</h2>
+                        <button id="mic-btn" class="mic-btn" title="Toggle microphone">
+                            <span class="material-symbols-rounded" id="mic-icon">mic</span>
+                            <span class="material-symbols-rounded hidden" id="mic-off-icon">mic_off</span>
+                            <div class="mic-ripple"></div>
+                        </button>
+                    </div>
+                    <div class="result-display">
+                        <div id="speech-result" class="result-text speech-text placeholder">
+                            Click mic to start
+                        </div>
+                        <div id="listening-indicator" class="listening-indicator hidden">
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                        </div>
+                    </div>
+                    <!-- Transcript Log -->
+                    <div class="transcript-log" id="transcript-log">
+                        <div class="transcript-header">
+                            <span class="material-symbols-rounded">article</span>
+                            <span>Live Transcript</span>
+                            <button class="clear-btn" id="clear-transcript" title="Clear transcript">
+                                <span class="material-symbols-rounded">delete_sweep</span>
+                            </button>
+                        </div>
+                        <div class="transcript-entries" id="transcript-entries">
+                            <div class="transcript-empty">Transcript will appear here...</div>
+                        </div>
+                    </div>
+
+                    <!-- Voice Commands Help -->
+                    <div class="voice-commands-help">
+                        <div class="commands-header">
+                            <span class="material-symbols-rounded">terminal</span>
+                            <span>Voice Commands</span>
+                        </div>
+                        <p class="commands-hint">Say <strong>"Open [site]"</strong> to launch:</p>
+                        <div class="commands-chips">
+                            <span class="command-chip">YouTube</span>
+                            <span class="command-chip">Twitter</span>
+                            <span class="command-chip">Google</span>
+                            <span class="command-chip">GitHub</span>
+                            <span class="command-chip">Gmail</span>
+                            <span class="command-chip">Instagram</span>
+                            <span class="command-chip">Reddit</span>
+                            <span class="command-chip">ChatGPT</span>
+                            <span class="command-chip">Wikipedia</span>
+                            <span class="command-chip">LinkedIn</span>
+                            <span class="command-chip">WhatsApp</span>
+                            <span class="command-chip">Netflix</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supported Gestures Card -->
+                <div class="card instructions-card">
+                    <div class="card-header">
+                        <span class="material-symbols-rounded">gesture</span>
+                        <h3>Supported Gestures</h3>
+                    </div>
+                    <div class="gestures-grid">
+                        <div class="gesture-chip" data-gesture="THUMBS UP"><span>👍</span> Thumbs Up</div>
+                        <div class="gesture-chip" data-gesture="HELLO"><span>🖐️</span> Hello</div>
+                        <div class="gesture-chip" data-gesture="FIST"><span>✊</span> Fist</div>
+                        <div class="gesture-chip" data-gesture="PEACE"><span>✌️</span> Peace</div>
+                        <div class="gesture-chip" data-gesture="THUMBS DOWN"><span>👎</span> Thumbs Down</div>
+                        <div class="gesture-chip" data-gesture="POINTING"><span>☝️</span> Pointing</div>
+                        <div class="gesture-chip" data-gesture="I LOVE YOU"><span>🤟</span> I Love You</div>
+                        <div class="gesture-chip" data-gesture="ROCK ON"><span>🤘</span> Rock On</div>
+                        <div class="gesture-chip" data-gesture="OK"><span>👌</span> OK</div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <div class="tech-badges">
+                <div class="tech-badge">
+                    <span class="material-symbols-rounded">visibility</span> MediaPipe
+                </div>
+                <div class="tech-badge">
+                    <span class="material-symbols-rounded">record_voice_over</span> Web Speech API
+                </div>
+                <div class="tech-badge">
+                    <span class="material-symbols-rounded">dns</span> Flask
+                </div>
+                <div class="tech-badge">
+                    <span class="material-symbols-rounded">smart_toy</span> Deep Learning
                 </div>
             </div>
-            
-        </main>
-        
-        <canvas id="canvas" style="display: none;"></canvas>
+            <p class="footer-text">Built with ❤️ using AI & Computer Vision</p>
+        </footer>
     </div>
 
+    <canvas id="canvas" style="display: none;"></canvas>
+    <div id="toast-container"></div>
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
